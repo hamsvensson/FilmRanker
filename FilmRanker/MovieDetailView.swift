@@ -2,14 +2,23 @@ import SwiftUI
 
 struct MovieDetailView: View {
     let movie: Movie
+    let isLogged: Bool
     @EnvironmentObject var movieStore: MovieStore
-    @State private var watchDate = Date()
-    @State private var review = ""
+    @State private var watchDate: Date
+    @State private var review: String
+    @State private var isEditing: Bool = false
     @State private var showingRankingView = false
     @State private var showingFirstMovieAlert = false
     @State private var showingRelogAlert = false
     @State private var loggedMovie: Movie?
     @Environment(\.presentationMode) var presentationMode
+    
+    init(movie: Movie, isLogged: Bool = false) {
+        self.movie = movie
+        self.isLogged = isLogged
+        _watchDate = State(initialValue: movie.watchDate ?? Date())
+        _review = State(initialValue: movie.review ?? "")
+    }
     
     var body: some View {
         ScrollView {
@@ -31,10 +40,31 @@ struct MovieDetailView: View {
                     .font(.subheadline)
                 
                 DatePicker("Watch Date", selection: $watchDate, displayedComponents: .date)
+                    .disabled(!isEditing && isLogged)
                 
                 TextEditor(text: $review)
                     .frame(height: 100)
                     .border(Color.gray, width: 1)
+                    .disabled(!isEditing && isLogged)
+                
+                if isLogged {
+                    HStack {
+                        Button(isEditing ? "Save" : "Edit") {
+                            if isEditing {
+                                saveChanges()
+                            }
+                            isEditing.toggle()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        
+                        if isEditing {
+                            Button("Cancel") {
+                                cancelChanges()
+                            }
+                            .buttonStyle(.bordered)
+                        }
+                    }
+                }
                 
                 Button("Log Movie") {
                     if movieStore.movies.contains(where: { $0.id == movie.id }) {
@@ -44,6 +74,7 @@ struct MovieDetailView: View {
                     }
                 }
                 .buttonStyle(.borderedProminent)
+                .disabled(isEditing) // Disable log button when editing
             }
             .padding()
         }
@@ -72,6 +103,27 @@ struct MovieDetailView: View {
         }
     }
     
+    func saveChanges() {
+        // Save the changes to the movie
+        let updatedMovie = Movie(id: movie.id,
+                                 title: movie.title,
+                                 year: movie.year,
+                                 director: movie.director,
+                                 poster: movie.poster,
+                                 rank: movie.rank,
+                                 watchDate: watchDate,
+                                 review: review,
+                                 isRankingComplete: movie.isRankingComplete)
+        movieStore.addOrUpdateMovie(updatedMovie)
+    }
+    
+    func cancelChanges() {
+        // Revert the changes
+        watchDate = movie.watchDate ?? Date()
+        review = movie.review ?? ""
+        isEditing = false
+    }
+    
     func logMovie() {
         let newMovie = Movie(id: movie.id,
                              title: movie.title,
@@ -93,4 +145,3 @@ struct MovieDetailView: View {
         }
     }
 }
-
