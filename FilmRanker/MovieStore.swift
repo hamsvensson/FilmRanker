@@ -102,4 +102,3 @@ class MovieStore: ObservableObject {
         return movies.first { !$0.isRankingComplete }
     }
 }
-
