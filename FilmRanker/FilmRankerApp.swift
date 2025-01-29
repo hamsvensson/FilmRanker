@@ -1,6 +1,6 @@
 import SwiftUI
 
-    @main
+@main
 struct FilmRankerApp: App {
     var body: some Scene {
         WindowGroup {
@@ -9,4 +9,5 @@ struct FilmRankerApp: App {
         }
     }
 }
+
 
